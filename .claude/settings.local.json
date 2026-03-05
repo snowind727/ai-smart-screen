@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew :app:dependencies --configuration compileClasspath)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
