@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
     }
 
     private void startAudioService() {
-        tvStatus.setText("录音监听中...");
+        // 不再显示"录音监听中..."文字，只显示背景图
         Intent intent = new Intent(this, AudioService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent);
