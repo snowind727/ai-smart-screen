@@ -5,11 +5,20 @@
 
     <!-- 背景图片，铺满整个屏幕不变形 -->
     <ImageView
+        android:id="@+id/iv_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:src="@drawable/home_bg"
         android:contentDescription="首页背景" />
+
+    <!-- 答案视频播放器（默认隐藏） -->
+    <VideoView
+        android:id="@+id/video_answer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
     <!-- 保留 TextView 但隐藏，用于权限被拒绝时的提示 -->
     <TextView
