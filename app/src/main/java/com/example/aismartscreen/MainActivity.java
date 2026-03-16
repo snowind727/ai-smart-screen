@@ -32,6 +32,8 @@ public class MainActivity extends Activity {
     private ImageView ivBackground;
     private VideoView videoAnswer;
     private BroadcastReceiver videoPlayReceiver;
+    // 当前播放的视频临时文件
+    private File currentVideoTempFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,15 +67,28 @@ public class MainActivity extends Activity {
         videoPlayReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if ("com.example.aismartscreen.PLAY_VIDEO".equals(intent.getAction())) {
+                String action = intent.getAction();
+                if ("com.example.aismartscreen.PLAY_VIDEO".equals(action)) {
                     String videoPath = intent.getStringExtra("video_path");
                     if (videoPath != null) {
                         playAnswerVideo(videoPath);
                     }
+                } else if ("com.example.aismartscreen.PAUSE_VIDEO".equals(action)) {
+                    pauseVideo();
+                } else if ("com.example.aismartscreen.RESUME_VIDEO".equals(action)) {
+                    String videoPath = intent.getStringExtra("video_path");
+                    int position = intent.getIntExtra("position", 0);
+                    resumeVideo(videoPath, position);
+                } else if ("com.example.aismartscreen.STOP_VIDEO".equals(action)) {
+                    stopVideo();
                 }
             }
         };
-        IntentFilter filter = new IntentFilter("com.example.aismartscreen.PLAY_VIDEO");
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.example.aismartscreen.PLAY_VIDEO");
+        filter.addAction("com.example.aismartscreen.PAUSE_VIDEO");
+        filter.addAction("com.example.aismartscreen.RESUME_VIDEO");
+        filter.addAction("com.example.aismartscreen.STOP_VIDEO");
         registerReceiver(videoPlayReceiver, filter);
     }
 
@@ -118,6 +133,9 @@ public class MainActivity extends Activity {
                             videoAnswer.stopPlayback();
                         }
                         
+                        // 保存当前视频文件引用
+                        currentVideoTempFile = finalTempFile;
+                        
                         // 隐藏背景图，显示视频
                         ivBackground.setVisibility(View.GONE);
                         
@@ -131,6 +149,7 @@ public class MainActivity extends Activity {
                             if (finalTempFile.exists()) {
                                 finalTempFile.delete();
                             }
+                            currentVideoTempFile = null;
                             // 隐藏视频，显示背景图
                             videoAnswer.setVisibility(View.GONE);
                             ivBackground.setVisibility(View.VISIBLE);
@@ -146,6 +165,7 @@ public class MainActivity extends Activity {
                             if (finalTempFile.exists()) {
                                 finalTempFile.delete();
                             }
+                            currentVideoTempFile = null;
                             // 隐藏视频，显示背景图
                             videoAnswer.setVisibility(View.GONE);
                             ivBackground.setVisibility(View.VISIBLE);
@@ -165,6 +185,7 @@ public class MainActivity extends Activity {
                         if (finalTempFile != null && finalTempFile.exists()) {
                             finalTempFile.delete();
                         }
+                        currentVideoTempFile = null;
                         // 隐藏视频，显示背景图
                         videoAnswer.setVisibility(View.GONE);
                         ivBackground.setVisibility(View.VISIBLE);
@@ -181,6 +202,7 @@ public class MainActivity extends Activity {
                     tempFile.delete();
                 }
                 runOnUiThread(() -> {
+                    currentVideoTempFile = null;
                     // 隐藏视频，显示背景图
                     videoAnswer.setVisibility(View.GONE);
                     ivBackground.setVisibility(View.VISIBLE);
@@ -190,6 +212,70 @@ public class MainActivity extends Activity {
                 });
             }
         }).start();
+    }
+    
+    /**
+     * 暂停视频播放
+     */
+    private void pauseVideo() {
+        if (videoAnswer.isPlaying()) {
+            int position = videoAnswer.getCurrentPosition();
+            videoAnswer.pause();
+            Log.d(TAG, "视频已暂停，当前位置: " + position + "ms");
+            // 通知 Service 视频暂停位置
+            Intent intent = new Intent("com.example.aismartscreen.VIDEO_PAUSED");
+            intent.putExtra("position", position);
+            sendBroadcast(intent);
+        }
+    }
+    
+    /**
+     * 恢复视频播放
+     */
+    private void resumeVideo(String videoAssetPath, int position) {
+        if (currentVideoTempFile != null && currentVideoTempFile.exists() && videoAnswer.getVisibility() == View.VISIBLE) {
+            // 如果临时文件还在且视频可见，直接恢复播放
+            try {
+                videoAnswer.seekTo(position);
+                videoAnswer.start();
+                Log.d(TAG, "视频已恢复播放，从位置: " + position + "ms");
+            } catch (Exception e) {
+                Log.e(TAG, "恢复视频播放失败", e);
+                // 如果恢复失败，重新播放视频
+                playAnswerVideo(videoAssetPath);
+                videoAnswer.setOnPreparedListener(mp -> {
+                    videoAnswer.seekTo(position);
+                    videoAnswer.start();
+                });
+            }
+        } else {
+            // 如果临时文件不存在或视频不可见，重新播放视频
+            Log.d(TAG, "临时文件不存在或视频不可见，重新播放视频: " + videoAssetPath);
+            playAnswerVideo(videoAssetPath);
+            // 等待视频准备完成后跳转到指定位置
+            videoAnswer.setOnPreparedListener(mp -> {
+                videoAnswer.seekTo(position);
+                videoAnswer.start();
+            });
+        }
+    }
+    
+    /**
+     * 停止视频播放
+     */
+    private void stopVideo() {
+        if (videoAnswer.isPlaying()) {
+            videoAnswer.stopPlayback();
+        }
+        // 删除临时文件
+        if (currentVideoTempFile != null && currentVideoTempFile.exists()) {
+            currentVideoTempFile.delete();
+            currentVideoTempFile = null;
+        }
+        // 隐藏视频，显示背景图
+        videoAnswer.setVisibility(View.GONE);
+        ivBackground.setVisibility(View.VISIBLE);
+        Log.d(TAG, "视频已停止");
     }
 
     @Override

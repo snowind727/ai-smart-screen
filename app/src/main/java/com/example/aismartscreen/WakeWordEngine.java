@@ -79,6 +79,7 @@ public class WakeWordEngine {
      * 在录音线程中调用即可。
      */
     public void feedAudio(byte[] pcmBytes, int readBytes) {
+        if (stream == null || spotter == null) return;
         // byte[] → float[] (归一化到 -1.0 ~ 1.0)
         int sampleCount = readBytes / 2;
         float[] samples = new float[sampleCount];
@@ -101,6 +102,23 @@ public class WakeWordEngine {
         String keyword = spotter.getResult(stream).getKeyword();
         if (keyword != null && !keyword.isEmpty() && callback != null) {
             callback.onWakeUp(keyword);
+            // 关键：检测到关键词后必须重置 stream，否则无法继续检测下一个关键词
+            // 通过重新创建 stream 实现重置（兼容所有 sherpa-onnx 版本）
+            if (stream != null && spotter != null) {
+                stream.release();
+                stream = spotter.createStream("");
+            }
+        }
+    }
+
+    /**
+     * 重置 stream 状态，用于恢复检测能力（如超时重置到状态0后）。
+     * 可在需要时由 AudioService 调用。
+     */
+    public void resetStream() {
+        if (stream != null && spotter != null) {
+            stream.release();
+            stream = spotter.createStream("");
         }
     }
 
