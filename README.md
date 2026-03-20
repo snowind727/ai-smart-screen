@@ -27,6 +27,7 @@
 - 说 "宝贝睡觉" 启动
 - 自动播放哄睡音频，循环播放 sleep 目录下的视频
 - 支持 "下一首" 切换视频，"结束" 退出模式
+- 用户可在 app/src/main/assets/answer_video/sleep 文件夹下放置自己的视频文件
 
 ### 📺 视频播放
 - 支持 MP4、AVI、MOV、MKV 格式
