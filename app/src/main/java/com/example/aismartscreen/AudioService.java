@@ -43,7 +43,7 @@ public class AudioService extends Service {
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     
     // 唤醒词列表
-    private static final String[] WAKE_WORDS = {"你好西西", "小雪飞"};
+    private static final String[] WAKE_WORDS = {"你好西西"};
     
     // 结束关键字（用于退出持续对话模式）
     private static final String END_KEYWORD = "结束";
