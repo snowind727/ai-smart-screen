@@ -53,7 +53,7 @@ public class AudioService extends Service {
     private static final String NEXT_KEYWORD = "下一首";
     
     // 哄睡相关关键字
-    private static final String[] SLEEP_KEYWORDS = {"宝贝睡觉", "诺诺睡觉"};
+    private static final String[] SLEEP_KEYWORDS = {"宝贝睡觉"};
     
     // 监听关键字超时时间（毫秒）
     private static final long KEYWORD_TIMEOUT_MS = 10000; // 10秒
